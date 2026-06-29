@@ -1,0 +1,20 @@
+[workspace]
+channels = ["conda-forge", "bioconda"]
+name = "ambient-r"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[dependencies]
+r-base = ">=4.4"
+r-soupx = "*"
+bioconductor-decontx = "*"
+bioconductor-singlecellexperiment = "*"
+r-seurat = ">=5"
+bioconductor-dropletutils = "*"
+bioconductor-scran = "*"
+bioconductor-scuttle = "*"
+bioconductor-anndatar = "*"
+r-optparse = "*"
+r-matrix = "*"
+r-remotes = "*"
+# scCDC must be installed from GitHub: remotes::install_github("ZJU-UoE-CCW-LAB/scCDC")

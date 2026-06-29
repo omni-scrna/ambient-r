@@ -1,0 +1,4 @@
+entrypoints:
+  soupx: run_soupx.R
+  decontx: run_decontx.R
+  sccdc: run_sccdc.R
