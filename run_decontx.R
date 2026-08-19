@@ -65,9 +65,7 @@ main <- function() {
 
   message("  making sce with corrected counts for all pools ..")
   sce_combined <- do.call(cbind, res_ls)
-
-
-  # write outputs
+  assayNames(sce_combined)[assayNames(sce_combined) == "X"] <- "counts"
 
   # write outputs
   h5ad_path <- file.path(args$output_dir, paste0(args$name, ".h5ad"))
