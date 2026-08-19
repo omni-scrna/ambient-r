@@ -1,58 +1,115 @@
 #!/usr/bin/env Rscript
 # DecontX ambient removal module.
 #
-# Reads raw 10x H5 + filtered h5ad matrices, runs decontX with the raw matrix
-# as background or in the default mode, and writes a corrected h5ad matrix.
+# Reads raw h5ad (with pool_id) + called cells TSV (with pool_id, sample_id),
+# subsets raw data to called cells, runs decontX per pool, and writes DATA-compatible outputs.
 
 suppressPackageStartupMessages({
   library(decontX)
   library(SingleCellExperiment)
-  library(DropletUtils)
   library(Matrix)
   library(anndataR)
+  library(yaml)
+  library(data.table)
 })
 
-script_dir <- (function() {
-  cargs <- commandArgs(trailingOnly = FALSE)
-  m <- grep("^--file=", cargs)
-  if (length(m) > 0) dirname(sub("^--file=", "", cargs[[m]])) else getwd()
-})()
-source(file.path(script_dir, "src", "cli.R"))
+source("src/common/cli.R")
+p <- arg_parser("DecontX ambient removal module")
+p <- add_base_args(p)
+p <- add_stage_args(p, "cleaning")
+p <- add_argument(p, "--use_background", default = "true", help = "Whether to use raw matrix as background")
+args <- parse_args(p)
+args$use_background <- tolower(args$use_background) %in% c("true", "1")
+
+# logging
+cat(sprintf("Full command: %s\n", paste(commandArgs(trailingOnly = FALSE), collapse = " ")))
+cat(sprintf("LOG: command line args\n----------------------------------\n"))
+for (i in 1:length(args)) {
+  cat(sprintf("  %s: %s\n", names(args)[i], args[[i]]))
+}
+cat(sprintf("----------------------------------\n"))
 
 
 main <- function() {
-  args <- parse_args_checked(description = "DecontX ambient removal module")
-  message(sprintf("Full command: %s", paste(commandArgs(trailingOnly = FALSE), collapse = " ")))
-  for (k in names(args)) message(sprintf("  %s: %s", k, args[[k]]))
-
   dir.create(args$output_dir, showWarnings = FALSE, recursive = TRUE)
 
-  message("  reading filtered matrix")
-  sce_filt <- read_h5ad(args$filtered_h5ad, as = "SingleCellExperiment")
+  message("  reading input files ..")
+  cells_dt <- fread(args$called_cells_tsv)
+  sce_raw <- read_h5ad(args$rawdata_raw_h5ad, as = "SingleCellExperiment")
 
-  if (args$use_background) {
-    message("  reading raw matrix (background)")
-    sce_raw <- read10xCounts(args$rawdata_h5, type = "HDF5")
+  pools = cells_dt$pool_id |> unique()
 
-    message("  running decontX with background")
-    sce_result <- decontX(sce_filt, background = sce_raw)
-  } else {
-    message("  running decontX without background (default)")
-    sce_result <- decontX(sce_filt)
-  }
+  res_ls = lapply(pools, function(pool) {
+    message(sprintf("  --- processing pool: %s ---", pool))
+    pool_cells <- cells_dt[pool_id == pool, cell_id]
+    pool_filt <- sce_raw[, pool_cells]
 
-  corrected <- assay(sce_result, "decontXcounts")
-  corrected <- round(corrected)
+    if (args$use_background) {
+      pool_raw <- sce_raw[, colData(sce_raw)$pool_id == pool]
+      message("  running decontX with raw matrix as background")
+      dcx_res_sce <- decontX(pool_filt, background = pool_raw)
+    } else {
+      message("  running decontX in default mode")
+      dcx_res_sce <- decontX(pool_filt)
+    }
+    corrected_mat <- round(assay(dcx_res_sce, "decontXcounts"))
+    pool_out <- SingleCellExperiment(
+      assays = list(X = corrected_mat),
+      rowData = rowData(pool_filt),
+      colData = colData(pool_filt)
+    )
+    
+    return(pool_out)
+  })
 
-  sce_out <- SingleCellExperiment(
-    assays = list(X = corrected),
-    rowData = rowData(sce_filt),
-    colData = colData(sce_filt)
+
+  message("  making sce with corrected counts for all pools ..")
+  sce_combined <- do.call(cbind, res_ls)
+
+
+  # write outputs
+
+  # write outputs
+  h5ad_path <- file.path(args$output_dir, paste0(args$name, ".h5ad"))
+  write_h5ad(sce_combined, h5ad_path)
+  message(sprintf("  wrote: %s", h5ad_path))
+
+  truth_values <- as.character(colData(sce_combined)$sample_id)
+
+  clusters_truth_path <- file.path(
+    args$output_dir, paste0(args$name, ".clusters_truth.tsv")
   )
+  fwrite(
+    data.table(
+      cell_id = colnames(sce_combined),
+      truths = truth_values,
+      truths_cl = NA_character_
+    ),
+    clusters_truth_path,
+    sep = "\t", quote = FALSE, row.names = FALSE
+  )
+  message(sprintf("  wrote: %s", clusters_truth_path))
 
-  out_path <- file.path(args$output_dir, paste0(args$name, "_corrected.h5ad"))
-  write_h5ad(sce_out, out_path)
-  message(sprintf("  wrote: %s", out_path))
+  num_clusters_path <- file.path(
+    args$output_dir, paste0(args$name, ".clusters_truth_num.txt")
+  )
+  writeLines(as.character(length(unique(truth_values))), con = num_clusters_path)
+  message(sprintf("  wrote: %s", num_clusters_path))
+
+  properties_path <- file.path(
+    args$output_dir, paste0(args$name, "_properties.yaml")
+  )
+  write_yaml(
+    list(
+      batch_var = "pool_id",
+      sample_var = "sample_id",
+      labels_var = "sample_id"
+    ),
+    properties_path
+  )
+  message(sprintf("  wrote: %s", properties_path))
+  
+  
 }
 
 if (sys.nframe() == 0L) {

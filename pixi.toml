@@ -16,5 +16,6 @@ bioconductor-scuttle = "*"
 bioconductor-anndatar = "*"
 r-optparse = "*"
 r-matrix = "*"
+r-yaml = "*"
 r-remotes = "*"
 # scCDC must be installed from GitHub: remotes::install_github("ZJU-UoE-CCW-LAB/scCDC")

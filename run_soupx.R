@@ -14,19 +14,19 @@ suppressPackageStartupMessages({
   library(anndataR)
 })
 
-script_dir <- (function() {
-  cargs <- commandArgs(trailingOnly = FALSE)
-  m <- grep("^--file=", cargs)
-  if (length(m) > 0) dirname(sub("^--file=", "", cargs[[m]])) else getwd()
-})()
-source(file.path(script_dir, "src", "cli.R"))
+source("src/common/cli.R")
+p <- arg_parser("SoupX ambient removal module")
+p <- add_base_args(p)
+p <- add_stage_args(p, "cleaning")
+p <- add_argument(p, "--rawdata_h5", help = "Raw 10x HDF5 matrix")
+p <- add_argument(p, "--filtered_h5ad", help = "Filtered h5ad matrix")
+args <- parse_args(p)
+
+message(sprintf("Full command: %s", paste(commandArgs(trailingOnly = FALSE), collapse = " ")))
+for (k in names(args)) message(sprintf("  %s: %s", k, args[[k]]))
 
 
 main <- function() {
-  args <- parse_args_checked(description = "SoupX ambient removal module")
-  message(sprintf("Full command: %s", paste(commandArgs(trailingOnly = FALSE), collapse = " ")))
-  for (k in names(args)) message(sprintf("  %s: %s", k, args[[k]]))
-
   dir.create(args$output_dir, showWarnings = FALSE, recursive = TRUE)
 
   message("  reading raw matrix")
