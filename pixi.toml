@@ -18,4 +18,6 @@ r-optparse = "*"
 r-matrix = "*"
 r-yaml = "*"
 r-remotes = "*"
+r-data.table = "*"
+r-babelgene = "*"
 # scCDC must be installed from GitHub: remotes::install_github("ZJU-UoE-CCW-LAB/scCDC")
