@@ -1,5 +1,5 @@
 {
-  "stage": "cleaning",
+  "stage": "ambient_removal",
   "version": "0.2.0",
   "benchmark": "omni-scrna/ambient-plan",
   "args": [
