@@ -18,7 +18,7 @@ suppressPackageStartupMessages({
 source("src/common/cli.R")
 p <- arg_parser("DecontX ambient removal module")
 p <- add_base_args(p)
-p <- add_stage_args(p, "cleaning")
+p <- add_stage_args(p, "AMBIENT")
 p <- add_argument(p, "--use_background", default = "true", help = "Whether to use raw matrix as background")
 args <- parse_args(p, argv = strip_output_args())
 args$use_background <- tolower(args$use_background) %in% c("true", "1")

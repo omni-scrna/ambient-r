@@ -17,7 +17,7 @@ suppressPackageStartupMessages({
 source("src/common/cli.R")
 p <- arg_parser("SoupX ambient removal module")
 p <- add_base_args(p)
-p <- add_stage_args(p, "cleaning")
+p <- add_stage_args(p, "AMBIENT")
 p <- add_argument(p, "--rawdata_h5", help = "Raw 10x HDF5 matrix")
 p <- add_argument(p, "--filtered_h5ad", help = "Filtered h5ad matrix")
 args <- parse_args(p)

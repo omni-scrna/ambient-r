@@ -13,7 +13,7 @@ suppressPackageStartupMessages({
 source("src/common/cli.R")
 p <- arg_parser("Passthrough (no ambient removal) module")
 p <- add_base_args(p)
-p <- add_stage_args(p, "cleaning")
+p <- add_stage_args(p, "AMBIENT")
 args <- parse_args(p, argv = strip_output_args())
 
 cat(sprintf("Full command: %s\n", paste(commandArgs(trailingOnly = FALSE), collapse = " ")))
