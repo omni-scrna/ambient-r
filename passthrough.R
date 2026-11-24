@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # Passthrough "no ambient removal" module.
 #
-# subsets the raw h5ad to the called-cell barcodes with no correction applied
+# subsets the PREP matrix to the called cells with no correction applied
 
 suppressPackageStartupMessages({
   library(SingleCellExperiment)
@@ -27,8 +27,8 @@ main <- function() {
   dir.create(args$output_dir, showWarnings = FALSE, recursive = TRUE)
 
   message("  reading input files ..")
-  cells_dt <- fread(args$called_cells_tsv)
-  sce_raw <- read_h5ad(args$rawdata_h5ad, as = "SingleCellExperiment", x_mapping = "counts")
+  cells_dt <- fread(args$prepared_cells_tsv)
+  sce_raw <- read_h5ad(args$prepared_h5ad, as = "SingleCellExperiment", x_mapping = "counts")
 
   message("  keeping only RNA (Gene Expression) features ..")
   sce_raw <- sce_raw[rowData(sce_raw)$feature_type == "Gene Expression", ]

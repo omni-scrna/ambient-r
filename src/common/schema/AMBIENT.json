@@ -1,9 +1,9 @@
 {
   "stage": "AMBIENT",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "benchmark": "omni-scrna/ambient-plan",
   "args": [
-    { "flag": "--rawdata_h5ad", "type": "path", "help": "Raw h5ad count matrix (unfiltered, one pool per dataset)" },
-    { "flag": "--called_cells_tsv", "type": "path", "help": "TSV with called cell barcodes (cell_id)" }
+    { "flag": "--prepared_h5ad", "type": "path", "help": "PREP output: h5ad count matrix of one pool (unfiltered; raw or merged)" },
+    { "flag": "--prepared_cells_tsv", "type": "path", "help": "PREP output: TSV with the called cells (cell_id), in the ids of prepared_h5ad" }
   ]
 }
